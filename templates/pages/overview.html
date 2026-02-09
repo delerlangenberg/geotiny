@@ -3,55 +3,23 @@
 
 <div class="hero container">
   <h1>GeoTiny EDU — Project‑Based Seismology</h1>
-  <p>Compare time‑domain waveforms and frequency spectra, interpret events and noise, and explore real global earthquakes.</p>
+  <p>Live monitoring for GeoTiny stations with a global earthquake feed. Use this page to view the local instrument and recent worldwide events; deeper teaching material is on the Education page.</p>
 </div>
 
 <div class="container">
-  <!-- EDU-MOVED START: Learning goals -->
-<!-- EDU-MOVED START: Educational reminders -->
-<div class="card mb-4">
-    <div class="card-header">Learning goals</div>
+
+  <!-- Introduction (concise) -->
+  <div class="card mb-4">
+    <div class="card-header">Introduction</div>
     <div class="card-body">
-      <ul>
-        <li>Identify microseisms (0.1–0.5 Hz), local activity (1–10 Hz), and mains (~50 Hz) in spectra.</li>
-        <li>Understand the resolution trade‑off: frequency resolution is $\\Delta f = \\tfrac{1}{T}$ for window length $T$.</li>
-        <li>Practice reproducible analysis with fixed windows, configurable parameters, and CSV outputs.</li>
-      </ul>
+      <p>
+        This Overview keeps operations front‑and‑center: the vendor UI for the local station and a live global seismic panel.
+        Learning goals, background theory, and exercises have moved to the Education page.
+      </p>
     </div>
   </div>
 
-<!-- EDU_INTRO_INSERTED -->
-
-<div class="container">
-  <div class="card" style="margin-top:12px;">
-    <div class="card-header">Introduction — DORO Lab Interdisciplinary Project‑Based Learning</div>
-    <div class="card-body">
-      <p><strong>GeoTiny EDU</strong> is part of the DORO Data Science Lab’s interdisciplinary, project‑based learning track. 
-         Students use real seismic devices (GeoTiny) alongside servers and tooling in the lab to practice end‑to‑end data work: 
-         collection, processing, visualization, interpretation, and reproducible reporting.</p>
-      <div class="edu-grid">
-        <div class="edu-callout edu-small">
-          <strong>What you’ll do</strong><br>
-          Explore waveforms and spectra, compare noise vs. events, and connect spectral bands to real‑world sources.
-        </div>
-        <div class="edu-callout edu-small">
-          <strong>How this fits data science</strong><br>
-          You’ll scope questions, design sampling and windows, analyze trends, and present findings — the full DS cycle.
-        </div>
-        <div class="edu-callout edu-small">
-          <strong>Tools</strong><br>
-          Live Lab, Spectrum, CSV exports, Python/R notebooks on lab servers, and device dashboards.
-        </div>
-      </div>
-      <p class="edu-muted edu-small">Tip: Keep notes — parameters ($f_s, N, T$), timestamps, and environment (weather, traffic, rooms). 
-         These metadata explain differences and support reproducibility.</p>
-      <p>For hands‑on tasks and background theory, see the <a href="/static/education.html">Education</a> page.</p>
-    </div>
-  </div>
-</div>
-
-<!-- EDU-MOVED END: Learning goals -->
-
+  <!-- Local instrument — live vendor UI (via proxy) -->
   <div class="card mb-4">
     <div class="card-header">Local instrument — live vendor UI (via proxy)</div>
     <div class="card-body">
@@ -63,6 +31,7 @@
     </div>
   </div>
 
+  <!-- Global seismic activity (live) -->
   <div class="card mb-4">
     <div class="card-header">Global seismic activity (live)</div>
     <div class="card-body">
@@ -71,18 +40,22 @@
         <button class="btn" data-win="hour">Past hour</button>
         <button class="btn active" data-win="day">Past day</button>
         <button class="btn" data-win="week">Past week</button>
+
         <label class="ms-2">Min magnitude: <span id="mag-val">0.0</span></label>
         <input id="mag-range" type="range" min="0" max="6.5" step="0.5" value="0">
+
         <label class="ms-2"><input id="auto-refresh" type="checkbox"> Auto‑refresh (60 s)</label>
         <button id="refresh-btn" class="btn">Refresh now</button>
         <button id="export-csv" class="btn primary small">Export CSV</button>
         <span id="quakes-count" class="small muted"></span>
       </div>
+
       <div class="legend mb-2">
-        <span class="dot m"></span> M<3
-        <span class="dot h"></span> 3≤M<5
+        <span class="dot m"></span> M&lt;3
+        <span class="dot h"></span> 3≤M&lt;5
         <span class="dot d"></span> M≥5
       </div>
+
       <canvas id="quakes-hist" class="mb-3"></canvas>
       <div id="quakes-map" class="mb-3"></div>
       <ul id="quakes-list" class="list-unstyled mb-0">
@@ -91,121 +64,20 @@
     </div>
   </div>
 
+  <!-- Resources (operational) -->
   <div class="card mb-5">
     <div class="card-header">Resources</div>
     <div class="card-body">
       <ul>
-        <li><a href="/lab">Live Lab</a> — Waveform + FFT with adjustable windows.</li>
-        <li><a href="/spectrum">Spectrum</a> — Multi‑channel FFT comparison.</li>
-        <li><a href="/data">Downloads</a> — CSV for notebooks (Python/MATLAB/Octave).</li>
+        <li><a href="{{ url_for('lab') }}">Live Lab</a> — Waveform + FFT with adjustable windows.</li>
+        <li><a href="{{ url_for('spectrum') }}">Spectrum</a> — Multi‑channel FFT comparison.</li>
+        <li><a href="{{ url_for('data') }}">Downloads</a> — CSV for notebooks (Python/MATLAB/Octave).</li>
+        <li><a href="{{ url_for('education') }}">Education</a> — Learning goals, reminders, and exercises.</li>
       </ul>
     </div>
   </div>
+
 </div>
-
-
-
-<div class="container">
-  <div class="card mb-5">
-    <div class="card-header">Educational reminders — Frequency analysis for seismology</div>
-    <div class="card-body">
-      <h5>Core relationships</h5>
-      <ul>
-        <li>Sampling: $f_s$ = samples per second, Nyquist limit $f_N = \frac{f_s}{2}$.</li>
-        <li>FFT size $N$ and window length $T = \frac{N}{f_s}$ set resolution: $\Delta f = \frac{f_s}{N} = \frac{1}{T}$.</li>
-        <li>Bin-to-frequency map: $f_k = k \cdot \frac{f_s}{N}$, for $k=0,1,\dots,\frac{N}{2}$ (real signals).</li>
-        <li>Amplitude vs. power: PSD stabilizes variance; use dB when comparing wide ranges.</li>
-      </ul>
-
-      <h5>Windows and leakage</h5>
-      <p class="muted">Windowing reduces spectral leakage when the signal is not an exact integer number of cycles in the window.</p>
-      <ul>
-        <li>Rectangular: highest leakage, narrowest main lobe.</li>
-        <li>Hann: good general‑purpose trade‑off (lower leakage, slightly wider main lobe).</li>
-        <li>Blackman: even lower leakage, wider main lobe.</li>
-      </ul>
-      <p class="small muted">Approx. main‑lobe widths (−3 dB, in bins): Rect ~ 0.89, Hann ~ 1.44, Blackman ~ 1.68. Longer $T$ narrows bins and separates close low‑frequency peaks.</p>
-
-      <h5>Seismic bands to recognize</h5>
-      <ul>
-        <li>Microseisms: $0.1$–$0.5$ Hz (ocean/wave coupling).</li>
-        <li>Local anthropogenic: $1$–$10$ Hz (traffic, machinery).</li>
-        <li>Mains/electrical: near $50$ or $60$ Hz and harmonics.</li>
-      </ul>
-
-      <h5>Project‑based mini‑tasks</h5>
-      <ol>
-        <li>Resolution experiment: In Live Lab, double $T$. Verify that the narrowest visible spacing between peaks halves, consistent with $\Delta f = 1/T$.</li>
-        <li>Leakage demo: With a steady vibration, switch Rect → Hann. Note peak height/spread changes; explain using window leakage.</li>
-        <li>Noise fingerprint: Compare 10‑minute spectra during class vs. night in $1$–$10$ Hz; justify differences in dB.</li>
-        <li>Event triage: From “Global seismic activity”, pick a $M \ge 4$ event within 24h. Annotate the vendor waveform around origin time; relate dominant spectral band to distance.</li>
-      </ol>
-
-      <details>
-        <summary><strong>Quick reference</strong> (click to expand)</summary>
-        <ul>
-          <li>Time–frequency trade‑off: more samples → better $\Delta f$, worse time localization.</li>
-          <li>Spectrograms: short windows capture transients; long windows resolve close frequencies.</li>
-          <li>Units: raw FFT amplitude scales with $N$; use PSD (e.g., dB/Hz) for stable comparisons.</li>
-        </ul>
-      </details>
-    </div>
-  </div>
-<!-- EDU-MOVED END: Educational reminders -->
-</div>
-
-
-
-
-<div class="container">
-  <div class="card mb-5">
-    <div class="card-header">Educational reminders — Frequency analysis for seismology</div>
-    <div class="card-body">
-      <h5>Core relationships</h5>
-      <ul>
-        <li>Sampling: $f_s$ = samples per second, Nyquist limit $f_N = \frac{f_s}{2}$.</li>
-        <li>FFT size $N$ and window length $T = \frac{N}{f_s}$ set resolution: $\Delta f = \frac{f_s}{N} = \frac{1}{T}$.</li>
-        <li>Bin-to-frequency map: $f_k = k \cdot \frac{f_s}{N}$, for $k=0,1,\dots,\frac{N}{2}$ (real signals).</li>
-        <li>Amplitude vs. power: PSD stabilizes variance; use dB when comparing wide ranges.</li>
-      </ul>
-
-      <h5>Windows and leakage</h5>
-      <p class="muted">Windowing reduces spectral leakage when the signal is not an exact integer number of cycles in the window.</p>
-      <ul>
-        <li>Rectangular: highest leakage, narrowest main lobe.</li>
-        <li>Hann: good general‑purpose trade‑off (lower leakage, slightly wider main lobe).</li>
-        <li>Blackman: even lower leakage, wider main lobe.</li>
-      </ul>
-      <p class="small muted">Approx. main‑lobe widths (−3 dB, in bins): Rect ~ 0.89, Hann ~ 1.44, Blackman ~ 1.68. Longer $T$ narrows bins and separates close low‑frequency peaks.</p>
-
-      <h5>Seismic bands to recognize</h5>
-      <ul>
-        <li>Microseisms: $0.1$–$0.5$ Hz (ocean/wave coupling).</li>
-        <li>Local anthropogenic: $1$–$10$ Hz (traffic, machinery).</li>
-        <li>Mains/electrical: near $50$ or $60$ Hz and harmonics.</li>
-      </ul>
-
-      <h5>Project‑based mini‑tasks</h5>
-      <ol>
-        <li>Resolution experiment: In Live Lab, double $T$. Verify that the narrowest visible spacing between peaks halves, consistent with $\Delta f = 1/T$.</li>
-        <li>Leakage demo: With a steady vibration, switch Rect → Hann. Note peak height/spread changes; explain using window leakage.</li>
-        <li>Noise fingerprint: Compare 10‑minute spectra during class vs. night in $1$–$10$ Hz; justify differences in dB.</li>
-        <li>Event triage: From “Global seismic activity”, pick a $M \ge 4$ event within 24h. Annotate the vendor waveform around origin time; relate dominant spectral band to distance.</li>
-      </ol>
-
-      <details>
-        <summary><strong>Quick reference</strong> (click to expand)</summary>
-        <ul>
-          <li>Time–frequency trade‑off: more samples → better $\Delta f$, worse time localization.</li>
-          <li>Spectrograms: short windows capture transients; long windows resolve close frequencies.</li>
-          <li>Units: raw FFT amplitude scales with $N$; use PSD (e.g., dB/Hz) for stable comparisons.</li>
-        </ul>
-      </details>
-    </div>
-  </div>
-</div>
-
-
 {% endblock %}
 
 {% block scripts %}
@@ -215,4 +87,3 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="{{ url_for('static', filename='js/overview.js') }}" defer></script>
 {% endblock %}
-

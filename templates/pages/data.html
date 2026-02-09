@@ -5,7 +5,7 @@
   <div class="card-header">Data downloads</div>
   <div class="card-body">
     <p class="edu-muted">
-      Export raw waveform for analysis. Use spectrum JSON for visualization; compute spectra in Python from raw CSV.
+      Export raw waveforms for analysis. Use Spectrum JSON for quick visualization; for teaching and research, compute spectra in Python from raw CSV.
     </p>
 
     <h5>Quick download links</h5>
@@ -17,7 +17,7 @@
 
     <h6>With parameters</h6>
     <ul class="edu-small">
-      <li>Waveform CSV: <a href="/api/wave.csv?station=GTN34&amp;channel=SHZ&amp;window_s=10">/api/wave.csv?station=GTN34&amp;channel=SHZ&amp;window_s=10</a></li>
+      <li>Waveform CSV: <a href="/api/wave.csv?station=GTN34&amp;channel=SHZ&amp;window_s=10">/api/wave.csv?station=GTN34&amp;channel=SHZ&ampMust;window_s=10</a></li>
       <li>Waveform JSON: <a href="/api/wave?station=GTN34&amp;channel=SHZ&amp;window_s=10">/api/wave?station=GTN34&amp;channel=SHZ&amp;window_s=10</a></li>
       <li>Spectrum JSON: <a href="/api/spectrum?station=GTN34&amp;channel=SHZ&amp;window_s=10&amp;fmax=50">/api/spectrum?station=GTN34&amp;channel=SHZ&amp;window_s=10&amp;fmax=50</a></li>
     </ul>
@@ -58,7 +58,7 @@ spec.to_csv("spectrum_from_wave.csv", index=False)
 print("fs =", fs, "Hz; T =", T, "s; df =", df, "Hz")</code></pre>
 
     <p class="edu-muted edu-small">
-      Key parameters: sampling rate $f_s$, window $T$, Nyquist $f_N = \\frac{f_s}{2}$, resolution $\\Delta f = \\frac{1}{T}$.
+      Key parameters: sampling rate $f_s$, window $T$, Nyquist $f_N = \frac{f_s}{2}$, resolution $\Delta f = \frac{1}{T}$.
       Keep $f_s$ and $T$ consistent across comparisons and record environment context.
     </p>
 
@@ -69,7 +69,7 @@ curl -o wave.csv "http://127.0.0.1:8050/api/wave.csv?station=GTN34&channel=SHZ&w
 # Inspect JSON
 curl -s "http://127.0.0.1:8050/api/wave?station=GTN34&channel=SHZ&window_s=10" | jq .
 
-# Spectrum JSON for visualization (no CSV export)
+# Spectrum JSON for visualization
 curl -s "http://127.0.0.1:8050/api/spectrum?station=GTN34&channel=SHZ&window_s=10&fmax=50" | jq .</code></pre>
   </div>
 </div>

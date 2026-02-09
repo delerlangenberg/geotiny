@@ -1,24 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>{{ title or "GeoTiny EDU · DORO Data Lab · IT:U Austria" }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/static/css/geotiny-edu.css">
-  {% block head %}{% endblock %}
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/geotiny-edu.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body>
 <header class="topbar">
   <div class="brand">
     <strong>GeoTiny EDU</strong>
-    <span class="sub">DORO Data Science Lab · IT:U Austria · Project-Based Learning</span>
+    <span class="sub">DORO Data Science Lab · IT:U Austria · Project‑Based Learning</span>
   </div>
   <nav class="nav">
-    <a href="/" class="{% if active==overview %}active{% endif %}">Overview</a>
-    <a href="/lab" class="{% if active==lab %}active{% endif %}">Live Lab</a>
-    <a href="/data" class="{% if active==data %}active{% endif %}">Data</a>
-    <a class="nav-link" href="/static/education.html">Education</a>
+    <a href="{{ url_for('overview') }}"
+       class="{% if (active or '') == 'overview' or request.path == url_for('overview') %}active{% endif %}">
+      Overview
+    </a>
+    <a href="{{ url_for('lab') }}"
+       class="{% if (active or '') == 'lab' or request.path.startswith('/lab') %}active{% endif %}">
+      Live Lab
+    </a>
+    <a href="{{ url_for('data') }}"
+       class="{% if (active or '') == 'data' or request.path.startswith('/data') %}active{% endif %}">
+      Data
+    </a>
+    <a href="{{ url_for('education') }}"
+       class="{% if (active or '') == 'education' or request.path.startswith('/education') %}active{% endif %}">
+      Education
+    </a>
   </nav>
 </header>
 

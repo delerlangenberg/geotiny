@@ -34,8 +34,8 @@
 
     <h6>How to use the app for analysis</h6>
     <ol>
-      <li>Explore <a href="/spectrum">Spectrum</a>: set window (e.g., 10 s) and $f_{\max}$ (e.g., 50 Hz); identify peaks and bands.</li>
-      <li>Download data from <a href="/data">Data</a>:
+      <li>Explore <a href="{{ url_for('spectrum') }}">Spectrum</a>: set window (e.g., 10 s) and $f_{\max}$ (e.g., 50 Hz); identify peaks and bands.</li>
+      <li>Download data from <a href="{{ url_for('data') }}">Data</a>:
         <ul>
           <li>Waveform CSV: <code>/api/wave.csv</code> — columns: <code>t_s</code>, <code>x</code></li>
           <li>Spectrum CSV: <code>/api/spectrum.csv</code> — columns: <code>f_hz</code>, <code>mag</code></li>
@@ -49,7 +49,7 @@
       <li><strong>Week 1</strong> — Orientation and setup: collect 3 windows (quiet room, HVAC, corridor); log $f_s$, $N$, $T$, timestamps, environment.</li>
       <li><strong>Week 2</strong> — Fundamentals: compute $\Delta f = \frac{1}{T}$; compare spectra; locate stable peaks.</li>
       <li><strong>Week 3</strong> — Noise and placement: test floor vs desk; compute band power in 1–5, 5–20, 20–50 Hz.</li>
-      <li><strong>Week 4</strong> — Simple detection: RMS/peak or band‑exceedance over baseline (e.g., 3× median); evaluate errors.</li>
+      <li><strong>Week 4</strong> — Simple detection: RMS/peak or band‑exceedance over baseline (e.g., $3\times$ median); evaluate errors.</li>
       <li><strong>Week 5</strong> — Reproducible report: organize raw CSV/JSON, notebooks, parameter tables, and clear figures.</li>
     </ol>
 
@@ -98,16 +98,16 @@ plt.tight_layout(); plt.show()</code></pre>
       <li><strong>Device</strong>: GeoTiny acquires raw vibration data (3 axes).</li>
       <li><strong>Local services</strong>:
         <ul>
-          <li>Vendor UI and data pages (proxied): <a href="/vendor/">/vendor/</a>, and WebSWave view: <a href="/vendor8091/">/vendor8091/</a></li>
+          <li>Vendor UI and data pages (proxied): <a href="/vendor/">/vendor/</a>, WebSWave: <a href="/vendor8091/">/vendor8091/</a></li>
           <li>Data pipeline: raw files (e.g., MiniSEED) → server → API endpoints.</li>
         </ul>
       </li>
       <li><strong>Application</strong> (this site):
         <ul>
-          <li>Waveform API: <code>/api/wave</code> and <code>/api/wave.csv</code></li>
-          <li>Spectrum API: <code>/api/spectrum</code> and <code>/api/spectrum.csv</code></li>
-          <li>Global quakes (USGS proxy): <code>/api/global_quakes</code> (for context on regional/global events)</li>
-          <li>Pages: <a href="/">Overview</a>, <a href="/spectrum">Spectrum</a>, <a href="/data">Data</a>, <a href="/education">Education</a></li>
+          <li>Waveform API: <code>/api/wave</code>, <code>/api/wave.csv</code></li>
+          <li>Spectrum API: <code>/api/spectrum</code>, <code>/api/spectrum.csv</code></li>
+          <li>Global quakes (USGS proxy): <code>/api/global_quakes</code></li>
+          <li>Pages: <a href="{{ url_for('overview') }}">Overview</a>, <a href="{{ url_for('spectrum') }}">Spectrum</a>, <a href="{{ url_for('data') }}">Data</a>, <a href="{{ url_for('education') }}">Education</a></li>
         </ul>
       </li>
     </ol>

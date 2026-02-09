@@ -6,7 +6,7 @@ GeoTiny EDU — Live Lab (Waveform + FFT)
 
 TROUBLESHOOTING (copy/paste commands):
 1) Confirm page uses external JS only (no inline renderer):
-   curl -sS http://127.0.0.1:8050/lab | egrep -n "lab_live\.js|const cvW|cv-wave|cv-fft" | sed -n "1,200p"
+   curl -sS http://127.0.0.1:8050/lab | egrep -n "lab_live\.js|cv-wave|cv-fft" | sed -n "1,200p"
    Expected: lab_live.js + cv-wave/cv-fft, and NO "const cvW"
 
 2) Confirm API is alive:
@@ -15,13 +15,12 @@ TROUBLESHOOTING (copy/paste commands):
 
 3) Vendor UI quick check:
    curl -sS -I http://127.0.0.1:8091/ | sed -n "1,12p"
-
 ============================================================ #}
 
 <div class="card">
   <h1>Live Lab: Waveform + FFT</h1>
   <p class="small">
-    Teaching view for time-domain and frequency-domain analysis (real GeoTiny data only).
+    Teaching view for time‑domain and frequency‑domain analysis (real GeoTiny data only).
   </p>
 
   <div class="card" style="margin-top:12px;">
@@ -35,12 +34,12 @@ TROUBLESHOOTING (copy/paste commands):
   <div class="controls" style="margin-top:12px">
     <label>Station</label>
     <select id="station">
-      {% for s in STATIONS %}<option value="{{s}}">{{s}}</option>{% endfor %}
+      {% for s in STATIONS %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
     </select>
 
     <label>Channel</label>
     <select id="channel">
-      {% for c in CHANNELS %}<option value="{{c}}">{{c}}</option>{% endfor %}
+      {% for c in CHANNELS %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
     </select>
 
     <label>Window (s)</label>
@@ -62,9 +61,8 @@ TROUBLESHOOTING (copy/paste commands):
       <option value="10000">10s</option>
     </select>
 
-    <a class="btn" href="/data" style="margin-left:auto">Go to Downloads</a>
+    <a class="btn" href="{{ url_for('data') }}" style="margin-left:auto">Go to Downloads</a>
     <a class="btn" href="http://{{ request.host.split(':')[0] }}:8091/" target="_blank" rel="noopener">Vendor UI</a>
-
   </div>
 </div>
 
@@ -106,7 +104,6 @@ TROUBLESHOOTING (copy/paste commands):
 </div>
 
 <!-- Load JS AFTER markup so it always finds the DOM -->
-<script src="/static/js/lab_live.js?v=20260205_3"></script>
-
+<script src="{{ url_for('static', filename='js/lab_live.js') }}?v=20260209_1" defer></script>
 
 {% endblock %}
