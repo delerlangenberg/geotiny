@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# ============================================================
+GeoTiny EDU — Live Lab (Waveform + FFT)
+
+TROUBLESHOOTING (copy/paste commands):
+1) Confirm page uses external JS only (no inline renderer):
+   curl -sS http://127.0.0.1:8050/lab | egrep -n "lab_live\.js|const cvW|cv-wave|cv-fft" | sed -n "1,200p"
+   Expected: lab_live.js + cv-wave/cv-fft, and NO "const cvW"
+
+2) Confirm API is alive:
+   curl -sS "http://127.0.0.1:8050/api/wave?station=GTN34&channel=SHZ&window_s=10" | python3 -c 'import sys,json;j=json.load(sys.stdin); print("wave ok:",j["ok"],"n:",j.get("n"))'
+   curl -sS "http://127.0.0.1:8050/api/spectrum?station=GTN34&channel=SHZ&window_s=10&fmax=50" | python3 -c 'import sys,json;j=json.load(sys.stdin); print("spec ok:",j["ok"],"peak:",j.get("dominant_hz"),"bins:",len(j.get("freq_hz",[])))'
+
+3) Vendor UI quick check:
+   curl -sS -I http://127.0.0.1:8091/ | sed -n "1,12p"
+
+============================================================ #}
+
+<div class="card">
+  <h1>Live Lab: Waveform + FFT</h1>
+  <p class="small">
+    Teaching view for time-domain and frequency-domain analysis (real GeoTiny data only).
+  </p>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="small muted">
+      <strong>Status:</strong> <span id="dataStatus">Loading…</span>
+      <span class="muted">·</span> <span id="dataMeta"></span>
+      <span class="muted">·</span> <span id="jsStatus">JS: pending</span>
+    </div>
+  </div>
+
+  <div class="controls" style="margin-top:12px">
+    <label>Station</label>
+    <select id="station">
+      {% for s in STATIONS %}<option value="{{s}}">{{s}}</option>{% endfor %}
+    </select>
+
+    <label>Channel</label>
+    <select id="channel">
+      {% for c in CHANNELS %}<option value="{{c}}">{{c}}</option>{% endfor %}
+    </select>
+
+    <label>Window (s)</label>
+    <!-- IMPORTANT: backend expects window_s -->
+    <select id="window_s">
+      <option value="5">5</option>
+      <option value="10" selected>10</option>
+      <option value="20">20</option>
+      <option value="30">30</option>
+      <option value="60">60</option>
+    </select>
+
+    <label>Refresh</label>
+    <!-- IMPORTANT: JS uses refresh_ms -->
+    <select id="refresh_ms">
+      <option value="0">Off</option>
+      <option value="2000">2s</option>
+      <option value="5000" selected>5s</option>
+      <option value="10000">10s</option>
+    </select>
+
+    <a class="btn" href="/data" style="margin-left:auto">Go to Downloads</a>
+    <a class="btn" href="http://{{ request.host.split(':')[0] }}:8091/" target="_blank" rel="noopener">Vendor UI</a>
+
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h3>Waveform (time domain)</h3>
+    <div class="canvasbox"><canvas id="cv-wave"></canvas></div>
+    <div class="small muted" id="waveInfo">—</div>
+    <div class="small muted">
+      RMS: <span id="waveRms">—</span> · P2P: <span id="waveP2P">—</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Spectrum (FFT)</h3>
+    <div class="canvasbox"><canvas id="cv-fft"></canvas></div>
+
+    <div class="bp">
+      <div class="row"><span>Microseisms (0.1–0.5 Hz)</span><span id="bp_micro_v">—</span></div>
+      <div class="bar"><div id="bp_micro" class="fill"></div></div>
+
+      <div class="row"><span>Local (1–10 Hz)</span><span id="bp_local_v">—</span></div>
+      <div class="bar"><div id="bp_local" class="fill"></div></div>
+
+      <div class="row"><span>Mains (~50 Hz)</span><span id="bp_mains_v">—</span></div>
+      <div class="bar"><div id="bp_mains" class="fill"></div></div>
+    </div>
+
+    <div class="small muted">
+      Peak: <span id="specPeakFreq">—</span> · Mag: <span id="specPeakMag">—</span>
+    </div>
+    <div class="small muted" id="specInfo">—</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <h2>Global seismic context (USGS, last 24h)</h2>
+  <div class="small" id="quakes">Loading…</div>
+</div>
+
+<!-- Load JS AFTER markup so it always finds the DOM -->
+<script src="/static/js/lab_live.js?v=20260205_3"></script>
+
+
+{% endblock %}

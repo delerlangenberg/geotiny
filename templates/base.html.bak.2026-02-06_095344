@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title or "GeoTiny EDU · DORO Data Lab · IT:U Austria" }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/geotiny-edu.css">
+  {% block head %}{% endblock %}
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <strong>GeoTiny EDU</strong>
+    <span class="sub">DORO Data Science Lab · IT:U Austria · Project-Based Learning</span>
+  </div>
+  <nav class="nav">
+    <a href="/" class="{% if active==overview %}active{% endif %}">Overview</a>
+    <a href="/lab" class="{% if active==lab %}active{% endif %}">Live Lab</a>
+    <a href="/data" class="{% if active==data %}active{% endif %}">Data</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  {% block content %}{% endblock %}
+</main>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

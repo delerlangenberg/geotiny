@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Seismology Education — GeoTiny EDU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/geotiny-edu.css">
+</head>
+<body>
+
+  <!-- Placeholder: will be replaced by the real nav from "/" -->
+  <div id="app-nav-fallback" style="background:#fff;border-bottom:1px solid #e5e7eb;">
+    <div class="container" style="padding:10px 8px;">
+      <a class="nav-pill" href="/">Overview</a>
+      <a class="nav-pill" href="/lab">Live Lab</a>
+      <a class="nav-pill" href="/spectrum">Spectrum</a>
+      <a class="nav-pill" href="/data">Data</a>
+      <a class="nav-pill active" href="/static/education.html">Education</a>
+    </div>
+  </div>
+
+  <div class="hero container" style="margin-top: 12px;">
+    <h1>Seismology Education — Frequency Analysis Guide</h1>
+    <p>Core ideas and mini‑tasks for project‑based learning with GeoTiny EDU.</p>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">Educational reminders — Frequency analysis for seismology</div>
+      <div class="card-body">
+        <h5>Core relationships</h5>
+        <ul>
+          <li>Sampling: $f_s$ = samples per second, Nyquist $f_N = \tfrac{f_s}{2}$.</li>
+          <li>Window length $T = \tfrac{N}{f_s}$ sets resolution: $\Delta f = \tfrac{f_s}{N} = \tfrac{1}{T}$.</li>
+          <li>Bin map: $f_k = k \cdot \tfrac{f_s}{N}$, for $k=0,1,\dots,\tfrac{N}{2}$ (real signals).</li>
+          <li>Amplitude vs. power: prefer PSD (often in dB/Hz) for stable comparisons.</li>
+        </ul>
+
+        <h5>Windows and leakage</h5>
+        <p class="muted">Windowing reduces leakage when the signal isn’t an integer number of cycles inside the window.</p>
+        <ul>
+          <li>Rectangular: narrow main lobe, high leakage.</li>
+          <li>Hann: balanced (lower leakage, slightly wider main lobe).</li>
+          <li>Blackman: low leakage, wider main lobe.</li>
+        </ul>
+        <p class="small muted">Approx. main‑lobe widths (−3 dB, in bins): Rect ~ 0.89, Hann ~ 1.44, Blackman ~ 1.68. Longer $T$ narrows bins and separates close low‑frequency peaks.</p>
+
+        <h5>Seismic bands</h5>
+        <ul>
+          <li>Microseisms: $0.1$–$0.5$ Hz.</li>
+          <li>Local anthropogenic: $1$–$10$ Hz.</li>
+          <li>Mains/electrical: near $50$ or $60$ Hz and harmonics.</li>
+        </ul>
+
+        <h5>Mini‑tasks</h5>
+        <ol>
+          <li>Resolution: in Live Lab, double $T$; verify spacing halves ($\Delta f = 1/T$).</li>
+          <li>Leakage: switch Rect → Hann; observe peak changes and explain.</li>
+          <li>Noise fingerprint: compare spectra day vs night in $1$–$10$ Hz.</li>
+          <li>Event triage: choose $M \ge 4$ from Global map; annotate waveform and relate band to distance.</li>
+        </ol>
+
+        <details>
+          <summary><strong>Quick reference</strong></summary>
+          <ul>
+            <li>Time–frequency trade‑off: more samples → better $\Delta f$, worse time localization.</li>
+            <li>Spectrograms: short windows capture transients; long windows resolve close tones.</li>
+            <li>Units: raw FFT amplitude scales with $N$; PSD (dB/Hz) is preferred for comparisons.</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (async function(){
+    // Try to fetch "/" and clone the exact top nav/header so styles match perfectly
+    try {
+      const resp = await fetch('/', {credentials:'same-origin'});
+      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      const html = await resp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+
+      // Heuristics: prefer an element that looks like the app’s top nav/header
+      let nav = doc.querySelector('nav, header, .site-nav, .topbar');
+      // If multiple, pick one that has links to /lab and /data (your app’s common links)
+      const candidates = [...doc.querySelectorAll('nav, header, .site-nav, .topbar')];
+      const scored = candidates.map(el=>{
+        const text = el.textContent || '';
+        const score = (text.includes('Live Lab')?1:0) + (text.includes('Data')?1:0) + (text.includes('Spectrum')?1:0);
+        return {el, score};
+      }).sort((a,b)=>b.score-a.score);
+      if (scored.length && scored[0].score>0) nav = scored[0].el;
+
+      if (nav) {
+        const placeholder = document.getElementById('app-nav-fallback');
+        placeholder.replaceWith(nav.cloneNode(true));
+
+        // Mark Education as active if a matching link is found
+        const setActive = (href) => {
+          const a = document.querySelector(`a[href="${href}"]`);
+          if (a) {
+            a.classList.add('active');
+            // If parent uses pill classes, try to match them too
+            if (!a.classList.contains('nav-pill') && a.classList.contains('nav-link')) {
+              a.classList.add('nav-pill');
+            }
+          }
+        };
+        setActive('/education');
+        setActive('/static/education.html');
+      }
+    } catch(e){
+      // Keep the fallback header if fetching/cloning fails
+      console.warn('Using fallback header:', e);
+    }
+  })();
+  </script>
+
+</body>
+</html>

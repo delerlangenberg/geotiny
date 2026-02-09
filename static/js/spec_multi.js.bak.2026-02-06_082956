@@ -1,0 +1,79 @@
+(function(){
+  const $ = (s)=>document.querySelector(s);
+  const selS = $('#sel-station'), selC = $('#sel-channels'), selW = $('#sel-window'), selR = $('#sel-refresh');
+  const grid = $('#spec-grid');
+
+  function selectDefaults() {
+    // default first 3 channels if available
+    const opts = Array.from(selC.options);
+    opts.forEach((o,i)=>{ o.selected = i < 3; });
+  }
+
+  function cardHTML(ch){
+    return `
+    <div class="col-12 col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Channel ${ch}</div>
+        <div class="card-body">
+          <canvas id="cv-w-${ch}" height="180" style="width:100%"></canvas>
+          <canvas id="cv-f-${ch}" height="180" style="width:100%; margin-top:8px"></canvas>
+          <div id="meta-${ch}" class="text-muted small mt-2"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function drawLine(cv, xs, ys, xmin, xmax, ymin, ymax){
+    const ctx = cv.getContext('2d');
+    const w = cv.clientWidth || cv.width || 640;
+    cv.width = w; // responsive redraw
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1.2;
+    const W=cv.width,H=cv.height, pad=12;
+    const sx = (x)=> pad + (x - xmin) / (xmax - xmin) * (W - 2*pad);
+    const sy = (y)=> H - pad - (y - ymin) / (ymax - ymin) * (H - 2*pad);
+    ctx.beginPath();
+    for (let i=0;i<xs.length;i++) {
+      const x = sx(xs[i]), y = sy(ys[i]);
+      if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  async function renderOnce(){
+    const station = selS.value, w = +selW.value;
+    const channels = Array.from(selC.selectedOptions).map(o=>o.value).slice(0,6);
+    if (channels.length === 0) return;
+    grid.innerHTML = channels.map(cardHTML).join('');
+    for (const ch of channels) {
+      try {
+        const wj = await fetch(`/api/wave?station=${encodeURIComponent(station)}&channel=${encodeURIComponent(ch)}&window_s=${w}`).then(r=>r.json());
+        if (!wj.ok) { document.getElementById(`meta-${ch}`).textContent = 'wave: error'; continue; }
+        const t = wj.time_s, x = wj.wave, fs = wj.fs;
+        const tmin=t[0], tmax=t[t.length-1], xmin=Math.min(...x), xmax=Math.max(...x);
+        drawLine(document.getElementById(`cv-w-${ch}`), t, x, tmin, tmax, xmin, xmax);
+
+        const sj = await fetch(`/api/spectrum?station=${encodeURIComponent(station)}&channel=${encodeURIComponent(ch)}&window_s=${w}&fmax=50`).then(r=>r.json());
+        if (!sj.ok) { document.getElementById(`meta-${ch}`).textContent = 'fft: error'; continue; }
+        const f=sj.freq_hz, m=sj.mag;
+        const fmin=0, fmax=f[f.length-1], mmax=Math.max(...m), mmin=0;
+        drawLine(document.getElementById(`cv-f-${ch}`), f, m, fmin, fmax, mmin, mmax);
+
+        const meta = `samples ${wj.n} · fs ${fs} Hz · peak ${sj.dominant_hz!=null ? sj.dominant_hz.toFixed(3) : '—'} Hz`;
+        document.getElementById(`meta-${ch}`).textContent = meta;
+      } catch (e) {
+        document.getElementById(`meta-${ch}`).textContent = 'error';
+      }
+    }
+  }
+
+  function start() {
+    if (!selS || !selC) return;
+    selectDefaults();
+    renderOnce();
+    document.getElementById('btn-apply').addEventListener('click', renderOnce);
+    setInterval(()=>renderOnce(), (+selR.value)*1000);
+  }
+
+  window.addEventListener('load', start);
+})();

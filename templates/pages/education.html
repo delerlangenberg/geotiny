@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <div class="card-header">Education — Two Parts</div>
+  <div class="card-body">
+    <p class="edu-muted">
+      This page guides your interdisciplinary course in two parts: (A) Seismic Science with Data Analysis, and (B) GeoTiny Device and System Integration.
+    </p>
+  </div>
+</div>
+
+<!-- Part A: Seismic Science + Data Analysis -->
+<div class="card" style="margin-top:12px;">
+  <div class="card-header">Part A — Seismic Science and Data Analysis</div>
+  <div class="card-body">
+    <h5>Learning goals</h5>
+    <ul>
+      <li>Interpret seismic waveforms and spectra; distinguish environmental noise from simple events.</li>
+      <li>Apply the data‑science cycle: questions, acquisition, processing, visualization, and reporting.</li>
+      <li>Document parameters ($f_s$, $N$, $T$) and context for reproducibility.</li>
+    </ul>
+
+    <h6>Core concepts and formulas</h6>
+    <ul>
+      <li>Sampling rate: $f_s$ (Hz)</li>
+      <li>Window length: $T = \frac{N}{f_s}$ (s)</li>
+      <li>Nyquist frequency: $f_N = \frac{f_s}{2}$</li>
+      <li>Frequency resolution: $\Delta f = \frac{1}{T}$</li>
+    </ul>
+    <p class="edu-small edu-muted">
+      Tip: Keep $f_s$ and $T$ constant when comparing spectra. Note timestamps, location, and environment (weather, occupancy, machinery).
+    </p>
+
+    <h6>How to use the app for analysis</h6>
+    <ol>
+      <li>Explore <a href="/spectrum">Spectrum</a>: set window (e.g., 10 s) and $f_{\max}$ (e.g., 50 Hz); identify peaks and bands.</li>
+      <li>Download data from <a href="/data">Data</a>:
+        <ul>
+          <li>Waveform CSV: <code>/api/wave.csv</code> — columns: <code>t_s</code>, <code>x</code></li>
+          <li>Spectrum CSV: <code>/api/spectrum.csv</code> — columns: <code>f_hz</code>, <code>mag</code></li>
+        </ul>
+      </li>
+      <li>Analyze in Python/R: compute $\Delta f$, band power, and annotate peaks (50/60 Hz, HVAC harmonics, etc.).</li>
+    </ol>
+
+    <h6>Project pathway (4–5 weeks)</h6>
+    <ol>
+      <li><strong>Week 1</strong> — Orientation and setup: collect 3 windows (quiet room, HVAC, corridor); log $f_s$, $N$, $T$, timestamps, environment.</li>
+      <li><strong>Week 2</strong> — Fundamentals: compute $\Delta f = \frac{1}{T}$; compare spectra; locate stable peaks.</li>
+      <li><strong>Week 3</strong> — Noise and placement: test floor vs desk; compute band power in 1–5, 5–20, 20–50 Hz.</li>
+      <li><strong>Week 4</strong> — Simple detection: RMS/peak or band‑exceedance over baseline (e.g., 3× median); evaluate errors.</li>
+      <li><strong>Week 5</strong> — Reproducible report: organize raw CSV/JSON, notebooks, parameter tables, and clear figures.</li>
+    </ol>
+
+    <h6>Starter code (Python)</h6>
+    <pre class="edu-small"><code>import pandas as pd
+import matplotlib.pyplot as plt
+
+# Waveform
+wave = pd.read_csv("http://127.0.0.1:8050/api/wave.csv")
+plt.figure(figsize=(8, 3))
+plt.plot(wave["t_s"], wave["x"], lw=1)
+plt.xlabel("Time (s)"); plt.ylabel("Amplitude")
+plt.title("Waveform (recent window)")
+plt.tight_layout(); plt.show()
+
+# Spectrum
+spec = pd.read_csv("http://127.0.0.1:8050/api/spectrum.csv")
+plt.figure(figsize=(8, 3))
+plt.plot(spec["f_hz"], spec["mag"], lw=1)
+plt.xlabel("Frequency (Hz)"); plt.ylabel("Magnitude")
+plt.title("Spectrum (recent window)")
+plt.xlim(0, spec["f_hz"].max())
+plt.tight_layout(); plt.show()</code></pre>
+
+    <h6>Deliverables and rubric</h6>
+    <ul>
+      <li>Logbook with $f_s$, $N$, $T$, timestamps, environment notes; figures with annotated peaks/bands.</li>
+      <li>Short report or notebook: methods, results, interpretation, limitations.</li>
+      <li>Assessment guide: Methods 25%, Analysis 35%, Reproducibility 25%, Communication 15%.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Part B: GeoTiny Device + System Integration -->
+<div class="card" style="margin-top:12px;">
+  <div class="card-header">Part B — GeoTiny Device and System Integration</div>
+  <div class="card-body">
+    <h5>What is GeoTiny?</h5>
+    <ul>
+      <li>Compact seismic sensor platform providing three channels (vertical SHZ, horizontal SHN/SHE).</li>
+      <li>Configurable sampling rate $f_s$; data windows processed for waveform and FFT.</li>
+    </ul>
+
+    <h6>How everything connects</h6>
+    <ol>
+      <li><strong>Device</strong>: GeoTiny acquires raw vibration data (3 axes).</li>
+      <li><strong>Local services</strong>:
+        <ul>
+          <li>Vendor UI and data pages (proxied): <a href="/vendor/">/vendor/</a>, and WebSWave view: <a href="/vendor8091/">/vendor8091/</a></li>
+          <li>Data pipeline: raw files (e.g., MiniSEED) → server → API endpoints.</li>
+        </ul>
+      </li>
+      <li><strong>Application</strong> (this site):
+        <ul>
+          <li>Waveform API: <code>/api/wave</code> and <code>/api/wave.csv</code></li>
+          <li>Spectrum API: <code>/api/spectrum</code> and <code>/api/spectrum.csv</code></li>
+          <li>Global quakes (USGS proxy): <code>/api/global_quakes</code> (for context on regional/global events)</li>
+          <li>Pages: <a href="/">Overview</a>, <a href="/spectrum">Spectrum</a>, <a href="/data">Data</a>, <a href="/education">Education</a></li>
+        </ul>
+      </li>
+    </ol>
+
+    <h6>Operating guidelines</h6>
+    <ul>
+      <li>Placement: stable surface; minimize cable strain; avoid foot traffic; photograph setup for documentation.</li>
+      <li>Consistency: keep $f_s$ and window $T$ fixed across comparisons; note any changes explicitly.</li>
+      <li>Time and context: verify system time; log environment (weather, occupancy, nearby machinery).</li>
+    </ul>
+
+    <h6>Troubleshooting checklist</h6>
+    <ul>
+      <li>No spectra or flat lines: check sensor coupling and placement; verify channel selection (SHZ/SHN/SHE).</li>
+      <li>Missing data: confirm device is powered and vendor UI loads at <a href="/vendor/">/vendor/</a>.</li>
+      <li>Inconsistent peaks: ensure identical $f_s$, $T$, and similar environments; re‑collect windows.</li>
+    </ul>
+
+    <h6>Data dictionary (API)</h6>
+    <ul class="edu-small">
+      <li><code>/api/wave</code> JSON: <code>t_s</code> (s), <code>x</code> (amplitude), <code>fs</code> (Hz), <code>station</code>, <code>channel</code></li>
+      <li><code>/api/wave.csv</code> CSV: columns <code>t_s</code>, <code>x</code></li>
+      <li><code>/api/spectrum</code> JSON: <code>freq_hz</code>, <code>mag</code>, <code>dominant_hz</code>, <code>fs</code>, <code>window_s</code></li>
+      <li><code>/api/spectrum.csv</code> CSV: columns <code>f_hz</code>, <code>mag</code></li>
+      <li><code>/api/global_quakes</code> JSON: <code>features</code> (USGS GeoJSON subset)</li>
+    </ul>
+
+    <p class="edu-muted edu-small">
+      Ethics and integrity: acknowledge data sources; avoid overstating conclusions; share code and parameters for verification.
+    </p>
+  </div>
+</div>
+
+{% endblock %}

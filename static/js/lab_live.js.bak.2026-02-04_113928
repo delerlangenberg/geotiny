@@ -1,0 +1,128 @@
+(function(){
+  function q(sel){ return document.querySelector(sel); }
+
+  function getParams(){
+    var stationEl = q("select[name=station]") || q("#station");
+    var channelEl = q("select[name=channel]") || q("#channel");
+    var windowEl  = q("select[name=window]")  || q("#window") || q("select[name=window_s]") || q("#window_s");
+    var refreshEl = q("select[name=refresh]") || q("#refresh");
+    return {
+      station: stationEl && stationEl.value ? stationEl.value : "GTN34",
+      channel: channelEl && channelEl.value ? channelEl.value : "SHZ",
+      window_s: windowEl  && windowEl.value  ? windowEl.value  : "10",
+      refresh_s: refreshEl && refreshEl.value ? refreshEl.value : "5"
+    };
+  }
+
+  function stats(arr){
+    if(!arr || !arr.length) return {n:0, mean:0, rms:0, p2p:0, min:0, max:0};
+    var n=arr.length, mean=0;
+    for(var i=0;i<n;i++) mean+=arr[i];
+    mean/=n;
+    var v=0, mn=arr[0], mx=arr[0];
+    for(var j=0;j<n;j++){
+      var d=arr[j]-mean; v+=d*d;
+      if(arr[j]<mn) mn=arr[j];
+      if(arr[j]>mx) mx=arr[j];
+    }
+    return {n:n, mean:mean, rms:Math.sqrt(v/n), p2p:(mx-mn), min:mn, max:mx};
+  }
+
+  function draw(canvas, xs, ys, title, xlabel){
+    var ctx = canvas.getContext("2d");
+    var W=canvas.width, H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+
+    var padL=55, padR=15, padT=14, padB=28;
+    ctx.strokeStyle="rgba(16,24,40,.12)";
+    ctx.lineWidth=1;
+    ctx.strokeRect(padL,padT,W-padL-padR,H-padT-padB);
+
+    if(!xs || !ys || !xs.length || !ys.length) return;
+
+    var xmin=xs[0], xmax=xs[xs.length-1];
+    var ymin=ys[0], ymax=ys[0];
+    for(var i=1;i<ys.length;i++){ if(ys[i]<ymin) ymin=ys[i]; if(ys[i]>ymax) ymax=ys[i]; }
+    if(xmax===xmin) xmax=xmin+1;
+    if(ymax===ymin) ymax=ymin+1;
+
+    function X(v){ return padL + (v-xmin)*(W-padL-padR)/(xmax-xmin); }
+    function Y(v){ return padT + (ymax-v)*(H-padT-padB)/(ymax-ymin); }
+
+    ctx.beginPath();
+    ctx.lineWidth=2;
+    ctx.strokeStyle="rgba(16,24,40,.90)";
+    var n=Math.min(xs.length, ys.length);
+    for(var k=0;k<n;k++){
+      var px=X(xs[k]), py=Y(ys[k]);
+      if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle="rgba(16,24,40,.85)";
+    ctx.font="600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(title, padL, 16);
+    ctx.fillStyle="rgba(16,24,40,.65)";
+    ctx.font="12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(xlabel, padL, H-8);
+  }
+
+  async function refreshOnce(){
+    var st=q("#dataStatus"), meta=q("#dataMeta");
+    var waveC=q("#waveCanvas"), specC=q("#specCanvas");
+    if(!st || !meta || !waveC || !specC) return;
+
+    var p=getParams();
+    meta.textContent="station "+p.station+" · channel "+p.channel+" · window "+p.window_s+"s";
+
+    try{
+      var wurl="/api/wave?station="+encodeURIComponent(p.station)+"&channel="+encodeURIComponent(p.channel)+"&window="+encodeURIComponent(p.window_s);
+      var wj=await (await fetch(wurl,{cache:"no-store"})).json();
+
+      if(wj.ok === false){
+        st.textContent="NO LIVE DATA ("+(wj.error||"wave ok=false")+")";
+        return;
+      }
+
+      var xs=wj.time_s||[];
+      var y=wj.wave||[];
+
+      // de-mean for readability
+      var m=0; for(var i=0;i<y.length;i++) m+=y[i]; if(y.length) m/=y.length;
+      var yd=y.map(function(v){return v-m;});
+      var ws=stats(yd);
+
+      draw(waveC, xs, yd, "Waveform (time domain)", "time [s]");
+
+      var surl="/api/spectrum?station="+encodeURIComponent(p.station)+"&channel="+encodeURIComponent(p.channel)+"&window="+encodeURIComponent(p.window_s);
+      var sj=await (await fetch(surl,{cache:"no-store"})).json();
+
+      if(sj.ok === false){
+        st.textContent="NO LIVE DATA ("+(sj.error||"spectrum ok=false")+")";
+        return;
+      }
+
+      draw(specC, sj.freq_hz||[], sj.mag||[], "Spectrum (FFT)", "frequency [Hz]");
+
+      st.textContent="OK · RMS "+ws.rms.toFixed(3)+" · P2P "+ws.p2p.toFixed(3)+" · "+(new Date()).toLocaleString();
+    }catch(e){
+      st.textContent="ERROR fetching live data (open console)";
+      console.error(e);
+    }
+  }
+
+  function schedule(){
+    if(window.__geotinyTimer) clearInterval(window.__geotinyTimer);
+    var sec=parseInt(getParams().refresh_s||"5",10);
+    if(!isFinite(sec) || sec<2) sec=5;
+    window.__geotinyTimer=setInterval(refreshOnce, sec*1000);
+  }
+
+  var sels=document.querySelectorAll("select");
+  for(var i=0;i<sels.length;i++){
+    sels[i].addEventListener("change", function(){ refreshOnce(); schedule(); });
+  }
+
+  refreshOnce();
+  schedule();
+})();

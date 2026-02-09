@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-3">
+  <div class="card mb-3">
+    <div class="card-header"><strong>Spectrum & FFT</strong> — multi-channel</div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-2">
+        <div>
+          <label class="form-label small mb-1">Station</label>
+          <select id="sel-station" class="form-select form-select-sm" style="min-width: 140px;">
+            {% for s in STATIONS %}<option value="{{s}}">{{s}}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label small mb-1">Channels</label>
+          <select id="sel-channels" class="form-select form-select-sm" multiple style="min-width: 180px;">
+            {% for c in CHANNELS %}<option value="{{c}}">{{c}}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label small mb-1">Window (s)</label>
+          <select id="sel-window" class="form-select form-select-sm" style="min-width: 120px;">
+            <option value="10">10</option><option value="20">20</option><option value="60">60</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label small mb-1">Refresh</label>
+          <select id="sel-refresh" class="form-select form-select-sm" style="min-width: 120px;">
+            <option value="2">2 s</option><option value="5" selected>5 s</option><option value="10">10 s</option>
+          </select>
+        </div>
+        <div class="align-self-end">
+          <button id="btn-apply" class="btn btn-primary btn-sm">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="spec-grid" class="row g-3"></div>
+  <div class="card mt-3"><div class="card-body small text-muted">
+    Frequency resolution: $\Delta f = 1/T$ where $T$ is the window length in seconds.
+  </div></div>
+</div>
+<script src="/static/js/spec_multi.js?v=1"></script>
+{% endblock %}
