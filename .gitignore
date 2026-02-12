@@ -1,0 +1,29 @@
+# Python / Flask
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+env/
+venv/
+
+# Logs / tmp
+*.log
+logs/
+tmp/
+
+# Data / artifacts
+data/
+incoming/
+collection/
+skycam/
+www/
+Archive/
+meta/
+
+# Editor / tooling
+.vscode/
+*.bak-*
+
+# System files
+.acl-backup.txt
+.hidden
