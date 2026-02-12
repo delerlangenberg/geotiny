@@ -28,7 +28,7 @@ meta/
 .acl-backup.txt
 .hidden
 
-# Local archives
+# Local archives / backups
 _bak/
 templates.tar.gz
 templates.zip
