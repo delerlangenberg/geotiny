@@ -27,3 +27,8 @@ meta/
 # System files
 .acl-backup.txt
 .hidden
+
+# Local archives
+_bak/
+templates.tar.gz
+templates.zip
