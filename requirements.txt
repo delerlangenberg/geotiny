@@ -1,0 +1,17 @@
+# Core scientific libraries
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+
+# Seismology (optional but recommended)
+obspy>=1.4.0
+
+# Data acquisition
+pyserial>=3.5
+
+# Configuration
+PyYAML>=6.0
+
+# Jupyter for analysis
+jupyter>=1.0.0
+jupyterlab>=4.0.0

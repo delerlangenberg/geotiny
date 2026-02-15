@@ -1,0 +1,45 @@
+# Geotiny Seismometer Configuration
+
+# Device connection
+device:
+  type: "geotiny"
+  connection: "ethernet"  # or "serial"
+  ip_address: "192.168.1.100"  # For Ethernet connection
+  port: 8080
+  # serial_port: "/dev/ttyUSB0"  # For serial connection
+  # baud_rate: 115200
+
+# Data acquisition
+acquisition:
+  sampling_rate: 100  # Hz
+  channels: 3  # X, Y, Z
+  buffer_size: 1024
+  save_interval: 300  # seconds (5 minutes)
+
+# Data storage
+storage:
+  raw_data_path: "./data/raw/"
+  processed_data_path: "./data/processed/"
+  format: "mseed"  # or "csv", "sac"
+  compression: true
+
+# Processing
+processing:
+  filter_type: "bandpass"
+  low_freq: 0.1  # Hz
+  high_freq: 40.0  # Hz
+  detrend: true
+  remove_response: false
+
+# Alerts
+alerts:
+  enabled: false
+  threshold: 1.0  # mm/s
+  email: "your-email@example.com"
+
+# Raspberry Pi specific
+raspberry_pi:
+  auto_start: false
+  sync_to_nas: false
+  nas_path: "/mnt/nas/seismo/"
+  sync_interval: 3600  # seconds (1 hour)
