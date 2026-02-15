@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Spectrum Analysis - Geotiny{% endblock %}
+
+{% block page_css %}
+<style>
+    .control-panel {
+        background-color: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .control-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .control-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--accent-cyan);
+    }
+
+    .tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .tab {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: none;
+        color: var(--text-secondary);
+        font-weight: 600;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .tab:hover {
+        color: var(--accent-cyan);
+    }
+
+    .tab.active {
+        color: var(--accent-cyan);
+        border-bottom-color: var(--accent-cyan);
+    }
+
+    .visualization-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    @media (max-width: 1200px) {
+        .visualization-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>Spectrum Analysis</h1>
+        <p class="text-secondary">Analyze frequency components and spectrograms</p>
+    </div>
+</div>
+
+<!-- Control Panel -->
+<div class="control-panel">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="control-group">
+                <label class="control-label">Device</label>
+                <select class="form-select" id="device-select">
+                    <option value="device_1">Device 1</option>
+                    <option value="device_2">Device 2</option>
+                    <option value="device_3">Device 3</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="control-group">
+                <label class="control-label">Channel</label>
+                <select class="form-select" id="channel-select">
+                    <option value="Z">Z (Vertical)</option>
+                    <option value="X">X (N-S)</option>
+                    <option value="Y">Y (E-W)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="control-group">
+                <label class="control-label">Time Window</label>
+                <select class="form-select" id="time-window-select">
+                    <option value="1min">1 minute</option>
+                    <option value="10min" selected>10 minutes</option>
+                    <option value="30min">30 minutes</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="control-group">
+                <label class="control-label">&nbsp;</label>
+                <button class="btn btn-primary w-100" onclick="analyzeSpectrum()">Analyze</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+    <button class="tab active" onclick="switchTab('fft')">FFT Spectrum</button>
+    <button class="tab" onclick="switchTab('spectrogram')">Spectrogram</button>
+    <button class="tab" onclick="switchTab('waveform')">Time Domain</button>
+</div>
+
+<!-- FFT Tab -->
+<div id="fft-tab" class="tab-content">
+    <div class="visualization-container">
+        <div class="card">
+            <div class="card-header">FFT Magnitude (dB)</div>
+            <div class="spectrum-container" id="fft-container" style="min-height: 400px;">
+                <div class="loader mx-auto mt-5"></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Statistics</div>
+            <div class="card-body" id="stats-container">
+                <p class="text-tertiary">Select parameters and click Analyze</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Spectrogram Tab -->
+<div id="spectrogram-tab" class="tab-content" style="display: none;">
+    <div class="card">
+        <div class="card-header">Power Spectrogram (Time-Frequency)</div>
+        <div class="spectrum-container" id="spectrogram-container" style="min-height: 500px;">
+            <div class="loader mx-auto mt-5"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Waveform Tab -->
+<div id="waveform-tab" class="tab-content" style="display: none;">
+    <div class="card">
+        <div class="card-header">Time Domain Waveform</div>
+        <div class="waveform-container" id="waveform-container" style="min-height: 400px;">
+            <div class="loader mx-auto mt-5"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Panel -->
+<div class="row mt-5">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Analysis Information</div>
+            <div class="card-body">
+                <h5>Understanding Seismic Spectra</h5>
+                <ul>
+                    <li><strong>FFT (Fast Fourier Transform):</strong> Converts time-domain seismic signals to frequency domain</li>
+                    <li><strong>Frequency Resolution:</strong> Determined by time window and sampling rate (Δf = f_s / N)</li>
+                    <li><strong>Nyquist Frequency:</strong> Maximum resolvable frequency = sampling_rate / 2 = 50 Hz for 100 Hz sampling</li>
+                    <li><strong>Spectrogram:</strong> Shows how frequency content changes over time</li>
+                    <li><strong>Peak Frequencies:</strong> Dominant oscillation modes in the seismic signal</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block page_js %}
+<script>
+    let currentTab = 'fft';
+
+    function switchTab(tab) {
+        // Hide all tabs
+        document.getElementById('fft-tab').style.display = 'none';
+        document.getElementById('spectrogram-tab').style.display = 'none';
+        document.getElementById('waveform-tab').style.display = 'none';
+
+        // Remove active from all buttons
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+        // Show selected tab and mark button as active
+        document.getElementById(tab + '-tab').style.display = 'block';
+        event.target.classList.add('active');
+        currentTab = tab;
+
+        if (currentTab === 'fft') analyzeFFT();
+        else if (currentTab === 'spectrogram') analyzeSpectrogram();
+        else if (currentTab === 'waveform') analyzeWaveform();
+    }
+
+    async function analyzeSpectrum() {
+        const deviceId = document.getElementById('device-select').value;
+        const channel = document.getElementById('channel-select').value;
+        const timeWindow = document.getElementById('time-window-select').value;
+
+        switch(currentTab) {
+            case 'fft': await analyzeFFT(deviceId, channel, timeWindow); break;
+            case 'spectrogram': await analyzeSpectrogram(deviceId, channel, timeWindow); break;
+            case 'waveform': await analyzeWaveform(deviceId, channel, timeWindow); break;
+        }
+    }
+
+    async function analyzeFFT(deviceId, channel, timeWindow) {
+        deviceId = deviceId || document.getElementById('device-select').value;
+        channel = channel || document.getElementById('channel-select').value;
+        timeWindow = timeWindow || document.getElementById('time-window-select').value;
+
+        try {
+            const response = await fetch('/api/spectrum/fft', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ device_id: deviceId, channel, time_window: timeWindow })
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                displayFFT(data.data);
+                displayStats(data.data);
+            }
+        } catch(error) {
+            console.error('Error analyzing FFT:', error);
+        }
+    }
+
+    async function analyzeSpectrogram(deviceId, channel, timeWindow) {
+        deviceId = deviceId || document.getElementById('device-select').value;
+        channel = channel || document.getElementById('channel-select').value;
+        timeWindow = timeWindow || document.getElementById('time-window-select').value;
+
+        try {
+            const response = await fetch('/api/spectrum/spectrogram', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ device_id: deviceId, channel, time_window: timeWindow })
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                displaySpectrogram(data.data);
+            }
+        } catch(error) {
+            console.error('Error analyzing spectrogram:', error);
+        }
+    }
+
+    async function analyzeWaveform(deviceId, channel, timeWindow) {
+        deviceId = deviceId || document.getElementById('device-select').value;
+        channel = channel || document.getElementById('channel-select').value;
+        timeWindow = timeWindow || document.getElementById('time-window-select').value;
+
+        try {
+            const response = await fetch('/api/devices/' + deviceId + '/info');
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                displayWaveform(data.data);
+            }
+        } catch(error) {
+            console.error('Error getting waveform:', error);
+        }
+    }
+
+    function displayFFT(data) {
+        // Plotly FFT visualization
+        const trace = {
+            x: data.frequencies,
+            y: data.magnitude_db,
+            type: 'scatter',
+            mode: 'lines',
+            fill: 'tozeroy',
+            line: { color: '#06b6d4', width: 2 },
+            fillcolor: 'rgba(6, 182, 212, 0.2)'
+        };
+
+        const layout = {
+            title: `FFT Spectrum - ${data.device_id} Ch-${data.channel}`,
+            xaxis: { title: 'Frequency (Hz)', color: '#cbd5e1' },
+            yaxis: { title: 'Magnitude (dB)', color: '#cbd5e1' },
+            plot_bgcolor: 'rgba(15, 23, 42, 0.5)',
+            paper_bgcolor: 'transparent',
+            font: { color: '#f1f5f9' },
+            margin: { l: 50, r: 50, t: 50, b: 50 }
+        };
+
+        Plotly.newPlot('fft-container', [trace], layout, { responsive: true });
+    }
+
+    function displaySpectrogram(data) {
+        // Plotly spectrogram visualization
+        const trace = {
+            z: data.power_db,
+            x: data.time_seconds,
+            y: data.frequencies,
+            type: 'heatmap',
+            colorscale: 'Viridis'
+        };
+
+        const layout = {
+            title: `Spectrogram - ${data.device_id} Ch-${data.channel}`,
+            xaxis: { title: 'Time (s)', color: '#cbd5e1' },
+            yaxis: { title: 'Frequency (Hz)', color: '#cbd5e1' },
+            plot_bgcolor: 'rgba(15, 23, 42, 0.5)',
+            paper_bgcolor: 'transparent',
+            font: { color: '#f1f5f9' }
+        };
+
+        Plotly.newPlot('spectrogram-container', [trace], layout, { responsive: true });
+    }
+
+    function displayWaveform(data) {
+        // Placeholder for waveform display
+        document.getElementById('waveform-container').innerHTML = '<p class="text-center mt-5">Waveform display - Coming soon</p>';
+    }
+
+    function displayStats(data) {
+        const statsHtml = `
+            <table class="table table-sm" style="color: var(--text-secondary);">
+                <tr>
+                    <td><strong>Frequency Resolution:</strong></td>
+                    <td class="code-block">${formatNumber(data.frequency_resolution, 4)} Hz</td>
+                </tr>
+                <tr>
+                    <td><strong>Nyquist Frequency:</strong></td>
+                    <td class="code-block">${formatNumber(data.nyquist_frequency, 1)} Hz</td>
+                </tr>
+                <tr>
+                    <td><strong>Samples (N):</strong></td>
+                    <td class="code-block">${data.frequencies.length}</td>
+                </tr>
+            </table>
+        `;
+        document.getElementById('stats-container').innerHTML = statsHtml;
+    }
+
+    // Load default analysis on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        analyzeSpectrum();
+    });
+</script>
+{% endblock %}

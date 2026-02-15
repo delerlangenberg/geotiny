@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}Geotiny Dashboard - Seismic Monitoring{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin: 2rem 0 3rem 0;
+    }
+
+    .device-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(30, 41, 59, 0.2) 100%);
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .device-card:hover {
+        border-color: var(--accent-cyan);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(30, 41, 59, 0.4) 100%);
+        transform: translateY(-4px);
+    }
+
+    .device-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .device-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--accent-cyan);
+    }
+
+    .channel-display {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+
+    .channel {
+        background-color: rgba(15, 23, 42, 0.5);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        text-align: center;
+    }
+
+    .channel-label {
+        font-weight: 600;
+        color: var(--accent-blue);
+        margin-bottom: 0.5rem;
+    }
+
+    .channel-value {
+        font-size: 1.5rem;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text-primary);
+    }
+
+    .channel-unit {
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+    }
+
+    .waveform-mini {
+        margin-top: 1rem;
+        height: 200px;
+        position: relative;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .stat-item {
+        background-color: rgba(15, 23, 42, 0.5);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 3px solid var(--accent-blue);
+    }
+
+    .stat-label {
+        color: var(--text-tertiary);
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--accent-cyan);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .vendor-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+        border: 2px solid var(--accent-blue);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin: 2rem 0;
+    }
+
+    .vendor-specs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin: 1rem 0;
+    }
+
+    .spec-item {
+        text-align: center;
+    }
+
+    .spec-label {
+        color: var(--text-tertiary);
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .spec-value {
+        font-weight: 600;
+        color: var(--accent-cyan);
+        font-size: 1.1rem;
+    }
+
+    .alert-container {
+        margin: 1rem 0;
+    }
+
+    .system-status {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+
+    .status-item {
+        background-color: rgba(15, 23, 42, 0.5);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 3px solid var(--accent-green);
+    }
+
+    .status-item.warning {
+        border-left-color: var(--accent-orange);
+    }
+
+    .status-item.error {
+        border-left-color: #ef4444;
+    }
+
+    .loading-skeleton {
+        background: linear-gradient(90deg, #1e293b, #0f172a, #1e293b);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Seismic Monitoring Dashboard</h1>
+            <p class="text-secondary">Real-time monitoring of 3 Geotiny seismic devices</p>
+        </div>
+        <div class="alert-container">
+            <span class="status-badge status-connected" id="connection-status">
+                <span class="spinner-grow spinner-grow-sm me-2"></span>
+                Connected
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- System Status Overview -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h3 class="mb-3">System Status</h3>
+    </div>
+    <div id="system-status-container" class="system-status">
+        <div class="status-item loading-skeleton" style="min-height: 100px;"></div>
+        <div class="status-item loading-skeleton" style="min-height: 100px;"></div>
+        <div class="status-item loading-skeleton" style="min-height: 100px;"></div>
+    </div>
+</div>
+
+<!-- Devices Grid -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h3 class="mb-3">Connected Devices</h3>
+    </div>
+</div>
+
+<div id="devices-container" class="device-grid">
+    <!-- Device cards will be injected here -->
+    <div class="card device-card loading-skeleton" style="min-height: 400px;"></div>
+    <div class="card device-card loading-skeleton" style="min-height: 400px;"></div>
+    <div class="card device-card loading-skeleton" style="min-height: 400px;"></div>
+</div>
+
+<!-- Vendor Information Card -->
+<div class="vendor-card mt-5">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h3 style="color: var(--accent-cyan);">Geotiny GT-3 Seismometer</h3>
+            <p class="text-secondary">Professional MEMS-based seismic sensor network for educational and research applications.</p>
+            
+            <div class="vendor-specs">
+                <div class="spec-item">
+                    <div class="spec-label">Sampling Rate</div>
+                    <div class="spec-value">100 Hz</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">Channels</div>
+                    <div class="spec-value">3-axis</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">Frequency Range</div>
+                    <div class="spec-value">0.1-50 Hz</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">Interface</div>
+                    <div class="spec-value">Ethernet</div>
+                </div>
+            </div>
+
+            <a href="https://www.geotiny.com" target="_blank" class="btn btn-primary mt-3">
+                Visit Geotiny →
+            </a>
+        </div>
+        <div class="col-md-6">
+            <div id="vendor-info-placeholder" style="text-align: center; color: var(--text-tertiary);">
+                <svg width="150" height="150" viewBox="0 0 150 150" fill="none" stroke="currentColor">
+                    <rect x="25" y="30" width="100" height="90" rx="5" stroke-width="2"/>
+                    <circle cx="75" cy="45" r="8" fill="currentColor"/>
+                    <line x1="35" y1="65" x2="115" y2="65" stroke-width="2"/>
+                    <line x1="35" y1="80" x2="115" y2="80" stroke-width="2"/>
+                    <line x1="35" y1="95" x2="115" y2="95" stroke-width="2"/>
+                    <line x1="35" y1="110" x2="115" y2="110" stroke-width="2"/>
+                </svg>
+                <p class="mt-3">Geotiny GT-3<br/>3-Axis Accelerometer</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Global Earthquake Alert -->
+<div class="row mt-5">
+    <div class="col-md-12">
+        <h3 class="mb-3">Recent Global Seismic Activity</h3>
+    </div>
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body text-center" id="global-quake-container">
+                <div class="loader mx-auto"></div>
+                <p class="mt-3 text-secondary">Loading earthquake data...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block page_js %}
+<script>
+    // Dashboard-specific functionality
+    const deviceIds = ['device_1', 'device_2', 'device_3'];
+    const updateInterval = 1000; // Update every second
+    let charts = {};
+
+    // Initialize dashboard
+    function initDashboard() {
+        console.log('Initializing dashboard...');
+        loadDeviceStatus();
+        loadGlobalEarthquakes();
+        subscribeToDevices();
+    }
+
+    // Load device status
+    async function loadDeviceStatus() {
+        try {
+            const response = await fetch('/api/devices/status');
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                renderDevices(data.data);
+                updateSystemStatus(data.data);
+            }
+        } catch (error) {
+            console.error('Error loading device status:', error);
+        }
+    }
+
+    // Render device cards
+    function renderDevices(devicesData) {
+        const container = document.getElementById('devices-container');
+        container.innerHTML = '';
+
+        for (const [deviceId, status] of Object.entries(devicesData)) {
+            const card = createDeviceCard(deviceId, status);
+            container.appendChild(card);
+        }
+
+        // Request initial waveform data
+        deviceIds.forEach(id => {
+            socket.emit('request_waveform', {
+                device_id: id,
+                channel: 'Z'
+            });
+        });
+    }
+
+    // Create device card
+    function createDeviceCard(deviceId, status) {
+        const card = document.createElement('div');
+        card.className = 'card device-card';
+
+        const statusBadge = status.connected 
+            ? '<span class="status-badge status-connected">● Online</span>'
+            : '<span class="status-badge status-disconnected">● Offline</span>';
+
+        card.innerHTML = `
+            <div class="card-body">
+                <div class="device-header">
+                    <div class="device-name">${deviceId.toUpperCase()}</div>
+                    ${statusBadge}
+                </div>
+
+                <div class="channel-display">
+                    <div class="channel">
+                        <div class="channel-label">X (N-S)</div>
+                        <div class="channel-value" id="${deviceId}-x">--</div>
+                        <div class="channel-unit">m/s²</div>
+                    </div>
+                    <div class="channel">
+                        <div class="channel-label">Y (E-W)</div>
+                        <div class="channel-value" id="${deviceId}-y">--</div>
+                        <div class="channel-unit">m/s²</div>
+                    </div>
+                    <div class="channel">
+                        <div class="channel-label">Z (Vertical)</div>
+                        <div class="channel-value" id="${deviceId}-z">--</div>
+                        <div class="channel-unit">m/s²</div>
+                    </div>
+                </div>
+
+                <div class="waveform-mini">
+                    <canvas id="${deviceId}-waveform-canvas"></canvas>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Buffer Samples</div>
+                        <div class="stat-value">${status.buffer_samples || 0}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Last Update</div>
+                        <div class="stat-value text-muted" style="font-size: 0.875rem;">${status.last_data ? new Date(status.last_data).toLocaleTimeString() : 'N/A'}</div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="/spectrum?device=${deviceId}" class="btn btn-primary btn-sm w-100">
+                        Analyze Spectrum
+                    </a>
+                </div>
+            </div>
+        `;
+
+        return card;
+    }
+
+    // Update system status
+    function updateSystemStatus(devicesData) {
+        const container = document.getElementById('system-status-container');
+        container.innerHTML = '';
+
+        const connectedCount = Object.values(devicesData).filter(d => d.connected).length;
+        const totalBufferSamples = Object.values(devicesData).reduce((sum, d) => sum + (d.buffer_samples || 0), 0);
+
+        const statusItems = [
+            {
+                label: 'Devices Online',
+                value: `${connectedCount}/3`,
+                status: connectedCount === 3 ? 'success' : connectedCount > 0 ? 'warning' : 'error'
+            },
+            {
+                label: 'Total Samples Buffered',
+                value: totalBufferSamples.toLocaleString(),
+                status: 'success'
+            },
+            {
+                label: 'Last Updated',
+                value: new Date().toLocaleTimeString(),
+                status: 'success'
+            }
+        ];
+
+        statusItems.forEach(item => {
+            const el = document.createElement('div');
+            el.className = `status-item ${item.status !== 'success' ? (item.status === 'warning' ? 'warning' : 'error') : ''}`;
+            el.innerHTML = `
+                <div style="color: var(--text-tertiary); font-size: 0.875rem;">${item.label}</div>
+                <div style="font-weight: 600; color: var(--accent-cyan); font-size: 1.5rem;">${item.value}</div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    // Load and display global earthquakes
+    async function loadGlobalEarthquakes() {
+        try {
+            const response = await fetch('/api/global/earthquakes?min_magnitude=5.0&time_period=1day');
+            const data = await response.json();
+
+            if (data.status === 'success' && data.data.length > 0) {
+                displayEarthquakesPreview(data.data.slice(0, 3));
+            } else {
+                document.getElementById('global-quake-container').innerHTML = `
+                    <p class="text-secondary">No earthquakes detected in the last 24 hours with magnitude ≥ 5.0</p>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading earthquakes:', error);
+            document.getElementById('global-quake-container').innerHTML = `
+                <p class="text-danger">Error loading earthquake data</p>
+            `;
+        }
+    }
+
+    // Display earthquake preview
+    function displayEarthquakesPreview(earthquakes) {
+        const container = document.getElementById('global-quake-container');
+        container.innerHTML = '';
+
+        earthquakes.forEach(eq => {
+            const eqElement = document.createElement('div');
+            eqElement.className = 'border-bottom pb-3 mb-3';
+            eqElement.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start">
+                        <h5 style="color: var(--accent-cyan);">M${eq.magnitude} - ${eq.place}</h5>
+                        <p class="text-tertiary" style="margin: 0;">${new Date(eq.datetime).toLocaleString()}</p>
+                        <p class="text-tertiary" style="margin: 0; font-size: 0.875rem;">Location: ${eq.latitude.toFixed(2)}°, ${eq.longitude.toFixed(2)}° | Depth: ${eq.depth_km.toFixed(1)} km</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(eqElement);
+        });
+
+        const viewMoreBtn = document.createElement('a');
+        viewMoreBtn.href = '/global';
+        viewMoreBtn.className = 'btn btn-secondary mt-3';
+        viewMoreBtn.textContent = 'View Global Earthquake Map →';
+        container.appendChild(viewMoreBtn);
+    }
+
+    // Subscribe to WebSocket events
+    function subscribeToDevices() {
+        deviceIds.forEach(deviceId => {
+            socket.emit('subscribe_device', {
+                device_id: deviceId,
+                sampling_rate: 10
+            });
+        });
+    }
+
+    // Handle waveform data from WebSocket
+    socket.on('waveform_data', function(data) {
+        const {device_id, channel, data: waveformData, timestamp} = data;
+        updateWaveformDisplay(device_id, waveformData);
+        updateChannelValue(device_id, channel);
+    });
+
+    // Update waveform display on canvas
+    function updateWaveformDisplay(deviceId, waveformData) {
+        const canvasId = `${deviceId}-waveform-canvas`;
+        const canvas = document.getElementById(canvasId);
+        
+        if (!canvas) return;
+
+        // Create or update chart
+        if (!charts[deviceId]) {
+            const ctx = canvas.getContext('2d');
+            charts[deviceId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: waveformData.length}, (_, i) => i),
+                    datasets: [{
+                        label: 'Acceleration (m/s²)',
+                        data: waveformData,
+                        borderColor: 'rgba(6, 182, 212, 0.8)',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 1,
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.1,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            ticks: { color: 'rgba(226, 232, 240, 0.5)' },
+                            grid: { color: 'rgba(51, 65, 85, 0.1)' }
+                        }
+                    }
+                }
+            });
+        } else {
+            charts[deviceId].data.datasets[0].data = waveformData;
+            charts[deviceId].update('none');
+        }
+    }
+
+    // Update channel value display
+    function updateChannelValue(deviceId, channel) {
+        const element = document.getElementById(`${deviceId}-${channel.toLowerCase()}`);
+        if (element) {
+            // Placeholder value (would come from actual data)
+            element.textContent = (Math.random() * 0.1).toFixed(4);
+        }
+    }
+
+    // Connection status handler
+    socket.on('connect', function() {
+        document.getElementById('connection-status').innerHTML = `
+            <span class="spinner-grow spinner-grow-sm me-2" style="color: var(--accent-green);"></span>
+            Connected
+        `;
+        document.getElementById('connection-status').classList.remove('status-disconnected');
+        document.getElementById('connection-status').classList.add('status-connected');
+    });
+
+    socket.on('disconnect', function() {
+        document.getElementById('connection-status').innerHTML = `
+            <span class="spinner-grow spinner-grow-sm me-2" style="color: #ef4444;"></span>
+            Disconnected
+        `;
+        document.getElementById('connection-status').classList.remove('status-connected');
+        document.getElementById('connection-status').classList.add('status-disconnected');
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initDashboard);
+
+    // Periodic updates
+    setInterval(loadDeviceStatus, updateInterval);
+    setInterval(loadGlobalEarthquakes, 60000); // Every minute
+</script>
+{% endblock %}

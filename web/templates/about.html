@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}About - Geotiny Seismic Monitor{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>About Geotiny Seismic Monitor</h1>
+        <p class="text-secondary">Educational platform for learning seismology and geophysics</p>
+    </div>
+</div>
+
+<!-- Project Overview -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Project Overview</div>
+            <div class="card-body">
+                <h5>Geotiny Seismic Monitoring Network</h5>
+                <p>
+                    This project is part of the <strong>Interdisciplinary Transformational University</strong> initiative in Austria,
+                    providing students with hands-on experience in seismology, data acquisition, and signal processing.
+                </p>
+                <p>
+                    The Geotiny network consists of 3 professional MEMS-based seismic sensors deployed across campus,
+                    providing real-time monitoring of local seismic activity and integration with global earthquake data.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Objectives -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header" style="background-color: rgba(59, 130, 246, 0.2); border-bottom-color: var(--accent-blue);">
+                <span style="color: var(--accent-blue);">🎯 Learning Objectives</span>
+            </div>
+            <div class="card-body">
+                <ul style="margin-bottom: 0;">
+                    <li>Understand seismic wave propagation and detection</li>
+                    <li>Learn signal processing and Fourier analysis</li>
+                    <li>Interpret spectrograms and frequency responses</li>
+                    <li>Monitor global earthquake activity</li>
+                    <li>Practice data acquisition and analysis workflows</li>
+                    <li>Develop scientific programming skills</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header" style="background-color: rgba(6, 182, 212, 0.2); border-bottom-color: var(--accent-cyan);">
+                <span style="color: var(--accent-cyan);">🔧 Technical Features</span>
+            </div>
+            <div class="card-body">
+                <ul style="margin-bottom: 0;">
+                    <li>Real-time waveform streaming (100 Hz)</li>
+                    <li>FFT and spectrograms for frequency analysis</li>
+                    <li>Time-window based analysis (1, 10, 30 min)</li>
+                    <li>Global earthquake data integration (USGS API)</li>
+                    <li>Professional monitoring interface</li>
+                    <li>Educational annotations and insights</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hardware -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Hardware Setup</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6 style="color: var(--accent-cyan);">Geotiny GT-3 Seismometer</h6>
+                        <ul style="font-size: 0.95rem;">
+                            <li><strong>Sensor:</strong> 3-axis MEMS accelerometer</li>
+                            <li><strong>Sampling:</strong> 100 Hz</li>
+                            <li><strong>Range:</strong> ±20 m/s²</li>
+                            <li><strong>Resolution:</strong> 12-bit</li>
+                            <li><strong>Connection:</strong> Ethernet</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 style="color: var(--accent-blue);">Location 1</h6>
+                        <span class="badge bg-primary">Device 1</span>
+                        <p class="text-tertiary mt-2" style="font-size: 0.9rem;">
+                            Building A<br>
+                            IP: 192.168.1.100
+                        </p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 style="color: var(--accent-blue);">Location 2</h6>
+                        <span class="badge bg-primary">Device 2</span>
+                        <p class="text-tertiary mt-2" style="font-size: 0.9rem;">
+                            Building B<br>
+                            IP: 192.168.1.101
+                        </p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 style="color: var(--accent-blue);">Location 3</h6>
+                        <span class="badge bg-primary">Device 3</span>
+                        <p class="text-tertiary mt-2" style="font-size: 0.9rem;">
+                            Building C<br>
+                            IP: 192.168.1.102
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How to Use -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Getting Started</div>
+            <div class="card-body">
+                <h5>Dashboard</h5>
+                <p>The dashboard shows real-time waveforms from all 3 devices with current amplitudes and buffer statistics.</p>
+
+                <h5 class="mt-3">Spectrum Analysis</h5>
+                <p>
+                    Select a device and time window (1, 10, or 30 minutes) to analyze the frequency content:
+                </p>
+                <ul>
+                    <li><strong>FFT Spectrum:</strong> Shows dominant frequencies in the signal</li>
+                    <li><strong>Spectrogram:</strong> Visualizes how frequency content changes over time</li>
+                    <li><strong>Time Domain:</strong> The raw waveform data</li>
+                </ul>
+
+                <h5 class="mt-3">Global Seismic</h5>
+                <p>
+                    Monitor worldwide earthquake activity with filters by magnitude and time period.
+                    Click on events to see details and locations on an interactive map.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resources -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Learning Resources</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 style="color: var(--accent-cyan);">External Resources</h6>
+                        <ul>
+                            <li><a href="https://earthquake.usgs.gov" target="_blank" style="color: var(--accent-blue);">USGS Earthquake Hazards Program</a></li>
+                            <li><a href="https://www.iris.edu" target="_blank" style="color: var(--accent-blue);">Incorporated Research Institutions for Seismology</a></li>
+                            <li><a href="https://www.geotiny.com" target="_blank" style="color: var(--accent-blue);">Geotiny Official Website</a></li>
+                            <li><a href="https://docs.obspy.org" target="_blank" style="color: var(--accent-blue);">ObsPy Seismology Python Library</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 style="color: var(--accent-cyan);">Key Concepts</h6>
+                        <ul>
+                            <li><strong>FFT:</strong> Fast Fourier Transform converts time to frequency domain</li>
+                            <li><strong>Nyquist Frequency:</strong> Maximum resolvable freq = fs/2 = 50 Hz</li>
+                            <li><strong>Spectrogram:</strong> 2D plot of frequency vs time</li>
+                            <li><strong>Sampling Rate:</strong> 100 Hz = 100 samples per second</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Technical Stack -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Technical Stack</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 style="color: var(--accent-blue);">Backend</h6>
+                        <ul style="font-size: 0.9rem;">
+                            <li>Python + Flask</li>
+                            <li>Flask-SocketIO (WebSocket)</li>
+                            <li>NumPy + SciPy (Signal Processing)</li>
+                            <li>ObsPy (Seismology)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 style="color: var(--accent-blue);">Frontend</h6>
+                        <ul style="font-size: 0.9rem;">
+                            <li>HTML5 + CSS3</li>
+                            <li>Bootstrap 5 (Responsive)</li>
+                            <li>Chart.js + Plotly.js</li>
+                            <li>Leaflet.js (Maps)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 style="color: var(--accent-blue);">Data</h6>
+                        <ul style="font-size: 0.9rem;">
+                            <li>Local: SQLite</li>
+                            <li>Real-time: WebSocket</li>
+                            <li>Global: USGS API</li>
+                            <li>Format: IEEE 754 Float</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

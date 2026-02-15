@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Geotiny Seismic Monitoring Network - Real-time earthquake and seismic data monitoring">
+    <meta name="theme-color" content="#0f172a">
+
+    <title>{% block title %}Geotiny Seismic Monitor{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Chart.js for waveforms -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Plotly.js for advanced visualizations -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <!-- Socket.IO for real-time communication -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        :root {
+            --primary-dark: #0f172a;
+            --primary-darker: #0a0f1f;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f97316;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --border-color: #334155;
+            --surface: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-darker);
+            color: var(--text-primary);
+            height: 100%;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0f1f 0%, #0f1729 100%);
+            min-height: 100vh;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        p {
+            color: var(--text-secondary);
+        }
+
+        .code-block {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #1a1f3a;
+            color: #10b981;
+        }
+
+        /* Navigation */
+        nav {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.4) 100%);
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(8px);
+            padding: 1rem 0;
+        }
+
+        nav.navbar {
+            padding: 1rem !important;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.3s ease;
+            font-weight: 500;
+            margin: 0 0.5rem;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--accent-cyan) !important;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-primary) !important;
+        }
+
+        /* Main container */
+        .container-fluid {
+            padding: 2rem 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background-color: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-cyan);
+            background-color: rgba(30, 41, 59, 0.6);
+        }
+
+        .card-header {
+            background-color: rgba(15, 23, 42, 0.5);
+            border-bottom-color: var(--border-color);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        /* Status indicators */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-connected {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-disconnected {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-warning {
+            background-color: rgba(249, 115, 22, 0.2);
+            color: #f97316;
+        }
+
+        /* Waveform container */
+        .waveform-container {
+            position: relative;
+            min-height: 300px;
+            background-color: rgba(15, 23, 42, 0.6);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            margin: 1rem 0;
+        }
+
+        .spectrum-container {
+            position: relative;
+            min-height: 400px;
+            background-color: rgba(15, 23, 42, 0.6);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            margin: 1rem 0;
+        }
+
+        /* Loading spinner */
+        .loader {
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Grid */
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        /* Footer */
+        footer {
+            background-color: rgba(10, 15, 31, 0.8);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-tertiary);
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 1rem 0.5rem;
+            }
+
+            .device-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Utility classes */
+        .text-muted {
+            color: var(--text-tertiary) !important;
+        }
+
+        .mt-4 { margin-top: 1.5rem; }
+        .mb-4 { margin-bottom: 1.5rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+    </style>
+
+    {% block page_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <svg class="d-inline-block me-2" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                </svg>
+                Geotiny Seismic Monitor
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/spectrum' %}active{% endif %}" href="/spectrum">Spectrum Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/global' %}active{% endif %}" href="/global">Global Seismic</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="/about">About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container-fluid">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>Geotiny Seismic Monitoring Network</p>
+        <p class="text-muted">Educational Platform for Interdisciplinary Transformational University</p>
+        <p class="small">
+            <a href="/about">About</a> |
+            <a href="https://www.geotiny.com" target="_blank">Geotiny.com</a> |
+            <a href="/api/health">API Status</a>
+        </p>
+        <p class="text-muted">© 2026 All rights reserved</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Socket.IO client script -->
+    <script>
+        // Global socket connection
+        const socket = io();
+
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            document.body.classList.add('connected');
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+            document.body.classList.remove('connected');
+        });
+
+        socket.on('error', function(error) {
+            console.error('Socket error:', error);
+        });
+    </script>
+
+    <!-- Common utilities -->
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+
+    {% block page_js %}{% endblock %}
+</body>
+</html>
