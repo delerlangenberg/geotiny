@@ -94,32 +94,26 @@
     <div class="row align-items-end">
         <div class="col-md-3">
             <label class="form-label" style="color: var(--accent-cyan);">Minimum Magnitude</label>
-            <select class="form-select" id="magnitude-filter">
-                <option value="3.0">3.0+</option>
-                <option value="4.0">4.0+</option>
-                <option value="5.0" selected>5.0+</option>
-                <option value="6.0">6.0+</option>
-                <option value="7.0">7.0+</option>
-            </select>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="range" class="form-range" id="magnitude-slider" min="0" max="9" step="0.1" value="0">
+                <span id="magnitude-value" style="min-width: 30px; color: var(--accent-cyan);">0.0</span>
+            </div>
         </div>
 
         <div class="col-md-3">
             <label class="form-label" style="color: var(--accent-cyan);">Time Period</label>
-            <select class="form-select" id="time-filter">
-                <option value="1day" selected>Last 24 hours</option>
-                <option value="7days">Last 7 days</option>
-                <option value="30days">Last 30 days</option>
+            <select class="form-select" id="time-period">
+                <option value="24h">Last 24 hours</option>
+                <option value="7d" selected>Last 7 days</option>
+                <option value="30d">Last 30 days</option>
             </select>
         </div>
 
         <div class="col-md-3">
-            <button class="btn btn-primary w-100" onclick="loadEarthquakes()">Load Data</button>
+            <button class="btn btn-primary w-100" onclick="window.globSeismic.loadEarthquakes()">Refresh Data</button>
         </div>
 
         <div class="col-md-3">
-            <div id="loading-indicator" style="display: none;">
-                <div class="loader"></div>
-            </div>
             <div id="data-status" class="text-tertiary" style="font-size: 0.875rem;">
                 Ready
             </div>
@@ -144,6 +138,13 @@
             <div class="card-body earthquake-list" id="earthquake-list">
                 <p class="text-tertiary text-center">Loading earthquake data...</p>
             </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Event Details</div>
+        <div class="card-body" id="earthquake-details">
+            <p class="text-tertiary text-center">Select an event to view details</p>
         </div>
     </div>
 </div>
@@ -207,148 +208,5 @@
 
 {% block page_js %}
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-
-<script>
-    let earthquakeMap = null;
-    let earthquakeMarkers = [];
-
-    function initMap() {
-        if (!earthquakeMap) {
-            earthquakeMap = L.map('earthquake-map').setView([20, 0], 2);
-
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '© OpenStreetMap contributors © CartoDB',
-                maxZoom: 19
-            }).addTo(earthquakeMap);
-        }
-    }
-
-    async function loadEarthquakes() {
-        const minMagnitude = document.getElementById('magnitude-filter').value;
-        const timePeriod = document.getElementById('time-filter').value;
-
-        document.getElementById('loading-indicator').style.display = 'block';
-        document.getElementById('data-status').textContent = 'Loading...';
-
-        try {
-            const response = await fetch(
-                `/api/global/earthquakes?min_magnitude=${minMagnitude}&time_period=${timePeriod}`
-            );
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                displayEarthquakes(data.data);
-                updateStats(data.data);
-                document.getElementById('data-status').textContent = `Loaded ${data.data.length} events`;
-            }
-        } catch (error) {
-            console.error('Error loading earthquakes:', error);
-            document.getElementById('data-status').textContent = 'Error loading data';
-        } finally {
-            document.getElementById('loading-indicator').style.display = 'none';
-        }
-    }
-
-    function displayEarthquakes(earthquakes) {
-        initMap();
-
-        // Clear existing markers
-        earthquakeMarkers.forEach(marker => earthquakeMap.removeLayer(marker));
-        earthquakeMarkers = [];
-
-        // Clear list
-        document.getElementById('earthquake-list').innerHTML = '';
-
-        // Add markers and list items
-        earthquakes.forEach(eq => {
-            // Add marker
-            const magnitude = eq.magnitude || 5;
-            const size = 15 + (magnitude - 5) * 5;
-            const color = getEarthquakeColor(magnitude);
-
-            const marker = L.circleMarker([eq.latitude, eq.longitude], {
-                radius: Math.min(size, 40),
-                fillColor: color,
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.7
-            }).bindPopup(`
-                <strong>${eq.place}</strong><br>
-                Magnitude: ${eq.magnitude}<br>
-                Depth: ${eq.depth_km.toFixed(1)} km<br>
-                ${new Date(eq.datetime).toLocaleString()}
-            `).addTo(earthquakeMap);
-
-            earthquakeMarkers.push(marker);
-
-            // Add list item
-            const listItem = document.createElement('div');
-            listItem.className = 'earthquake-item';
-            listItem.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div>
-                        <div class="magnitude-badge" style="${getMagnitudeClass(magnitude)}">
-                            M${eq.magnitude.toFixed(1)}
-                        </div>
-                        <p style="margin: 0.5rem 0 0; color: var(--text-secondary);">
-                            ${eq.place}<br>
-                            <span class="text-tertiary" style="font-size: 0.85rem;">
-                                ${new Date(eq.datetime).toLocaleString()}
-                            </span>
-                        </p>
-                    </div>
-                    <div style="text-align: right; color: var(--text-tertiary); font-size: 0.85rem;">
-                        ${eq.depth_km.toFixed(0)} km
-                    </div>
-                </div>
-            `;
-            listItem.onclick = () => {
-                earthquakeMap.setView([eq.latitude, eq.longitude], 6);
-            };
-            document.getElementById('earthquake-list').appendChild(listItem);
-        });
-    }
-
-    function getEarthquakeColor(magnitude) {
-        if (magnitude >= 7.0) return '#ef4444';
-        if (magnitude >= 6.0) return '#f97316';
-        if (magnitude >= 5.0) return '#eab308';
-        return '#10b981';
-    }
-
-    function getMagnitudeClass(magnitude) {
-        if (magnitude >= 6.0) return 'class="magnitude-badge magnitude-large"';
-        if (magnitude >= 5.0) return 'class="magnitude-badge magnitude-medium"';
-        return 'class="magnitude-badge magnitude-small"';
-    }
-
-    function updateStats(earthquakes) {
-        if (earthquakes.length === 0) {
-            document.getElementById('total-events').textContent = '0';
-            document.getElementById('avg-magnitude').textContent = '--';
-            document.getElementById('max-magnitude').textContent = '--';
-            return;
-        }
-
-        const mags = earthquakes.map(e => e.magnitude);
-        const avg = (mags.reduce((a, b) => a + b, 0) / mags.length).toFixed(1);
-        const max = Math.max(...mags).toFixed(1);
-
-        document.getElementById('total-events').textContent = earthquakes.length;
-        document.getElementById('avg-magnitude').textContent = avg;
-        document.getElementById('max-magnitude').textContent = max;
-        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-    }
-
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        initMap();
-        loadEarthquakes();
-    });
-
-    // Auto-refresh every 5 minutes
-    setInterval(loadEarthquakes, 300000);
-</script>
+<script src="{{ url_for('static', filename='js/global.js') }}"></script>
 {% endblock %}
